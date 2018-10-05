@@ -10,11 +10,11 @@ import 'package:flutter_map/src/map/map.dart';
 import 'package:latlong/latlong.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'package:tuple/tuple.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'layer.dart';
 
 class TileLayerOptions extends LayerOptions {
-  ///TEST COMMENT
   ///Defines the structure to create the URLs for the tiles.
   ///
   ///Example:
@@ -25,15 +25,18 @@ class TileLayerOptions extends LayerOptions {
   ///
   ///https://a.tile.openstreetmap.org/12/2177/1259.png
   final String urlTemplate;
+
   ///Size for the tile.
   ///Default is 256
   final double tileSize;
+
   ///Determiantes the max zoom applicable.
   ///In most tile providers goes from 0 to 19.
   final double maxZoom;
 
   final bool zoomReverse;
   final double zoomOffset;
+
   ///List of subdomains for the URL.
   ///
   ///Example:
@@ -50,6 +53,7 @@ class TileLayerOptions extends LayerOptions {
   ///https://b.tile.openstreetmap.org/{z}/{x}/{y}.png
   ///https://c.tile.openstreetmap.org/{z}/{x}/{y}.png
   final List<String> subdomains;
+
   ///Color shown behind the tiles.
   final Color backgroundColor;
 
@@ -145,14 +149,8 @@ class _TileLayerState extends State<TileLayer> {
   }
 
   String getTileUrl(Coords coords) {
-    var data = <String, String>{
-      'x': coords.x.round().toString(),
-      'y': coords.y.round().toString(),
-      'z': coords.z.round().toString(),
-      's': _getSubdomain(coords)
-    };
-    Map<String, String> allOpts = new Map.from(data)
-      ..addAll(this.options.additionalOptions);
+    var data = <String, String>{'x': coords.x.round().toString(), 'y': coords.y.round().toString(), 'z': coords.z.round().toString(), 's': _getSubdomain(coords)};
+    Map<String, String> allOpts = new Map.from(data)..addAll(this.options.additionalOptions);
     return util.template(this.options.urlTemplate, allOpts);
   }
 
@@ -214,9 +212,7 @@ class _TileLayerState extends State<TileLayer> {
     var pixelBounds = this._getTiledPixelBounds(center);
     var tileRange = _pxBoundsToTileRange(pixelBounds);
     var margin = this.options.keepBuffer ?? 2;
-    var noPruneRange = new Bounds(
-        tileRange.bottomLeft - new Point(margin, -margin),
-        tileRange.topRight + new Point(margin, -margin));
+    var noPruneRange = new Bounds(tileRange.bottomLeft - new Point(margin, -margin), tileRange.topRight + new Point(margin, -margin));
     for (var tileKey in _tiles.keys) {
       var tile = _tiles[tileKey];
       var c = tile.coords;
@@ -279,29 +275,15 @@ class _TileLayerState extends State<TileLayer> {
     // wrapping
     this._wrapX = crs.wrapLng;
     if (_wrapX != null) {
-      var first = (map.project(new LatLng(0.0, crs.wrapLng.item1), tileZoom).x /
-              tileSize.x)
-          .floor()
-          .toDouble();
-      var second =
-          (map.project(new LatLng(0.0, crs.wrapLng.item2), tileZoom).x /
-                  tileSize.y)
-              .ceil()
-              .toDouble();
+      var first = (map.project(new LatLng(0.0, crs.wrapLng.item1), tileZoom).x / tileSize.x).floor().toDouble();
+      var second = (map.project(new LatLng(0.0, crs.wrapLng.item2), tileZoom).x / tileSize.y).ceil().toDouble();
       _wrapX = new Tuple2(first, second);
     }
 
     this._wrapY = crs.wrapLat;
     if (_wrapY != null) {
-      var first = (map.project(new LatLng(crs.wrapLat.item1, 0.0), tileZoom).y /
-              tileSize.x)
-          .floor()
-          .toDouble();
-      var second =
-          (map.project(new LatLng(crs.wrapLat.item2, 0.0), tileZoom).y /
-                  tileSize.y)
-              .ceil()
-              .toDouble();
+      var first = (map.project(new LatLng(crs.wrapLat.item1, 0.0), tileZoom).y / tileSize.x).floor().toDouble();
+      var second = (map.project(new LatLng(crs.wrapLat.item2, 0.0), tileZoom).y / tileSize.y).ceil().toDouble();
       _wrapY = new Tuple2(first, second);
     }
   }
@@ -347,8 +329,7 @@ class _TileLayerState extends State<TileLayer> {
 
     if (queue.length > 0) {
       for (var i = 0; i < queue.length; i++) {
-        _tiles[_tileCoordsToKey(queue[i])] =
-            new Tile(_wrapCoords(queue[i]), true);
+        _tiles[_tileCoordsToKey(queue[i])] = new Tile(_wrapCoords(queue[i]), true);
       }
     }
 
@@ -398,10 +379,7 @@ class _TileLayerState extends State<TileLayer> {
     var crs = map.options.crs;
     if (!crs.infinite) {
       var bounds = _globalTileRange;
-      if ((crs.wrapLng == null &&
-              (coords.x < bounds.min.x || coords.x > bounds.max.x)) ||
-          (crs.wrapLat == null &&
-              (coords.y < bounds.min.y || coords.y > bounds.max.y))) {
+      if ((crs.wrapLng == null && (coords.x < bounds.min.x || coords.x > bounds.max.x)) || (crs.wrapLat == null && (coords.y < bounds.min.y || coords.y > bounds.max.y))) {
         return false;
       }
     }
@@ -429,9 +407,7 @@ class _TileLayerState extends State<TileLayer> {
         child: new FadeInImage(
           fadeInDuration: const Duration(milliseconds: 100),
           key: new Key(_tileCoordsToKey(coords)),
-          placeholder: options.placeholderImage != null
-              ? options.placeholderImage
-              : new MemoryImage(kTransparentImage),
+          placeholder: options.placeholderImage != null ? options.placeholderImage : new MemoryImage(kTransparentImage),
           image: _getImageProvider(getTileUrl(coords)),
           fit: BoxFit.fill,
         ),
@@ -447,18 +423,14 @@ class _TileLayerState extends State<TileLayer> {
         return new FileImage(new File(url));
       }
     } else {
-      return new NetworkImage(url);
+      return CachedNetworkImageProvider(url);
     }
   }
 
   Coords _wrapCoords(Coords coords) {
     var newCoords = new Coords(
-      _wrapX != null
-          ? util.wrapNum(coords.x.toDouble(), _wrapX)
-          : coords.x.toDouble(),
-      _wrapY != null
-          ? util.wrapNum(coords.y.toDouble(), _wrapY)
-          : coords.y.toDouble(),
+      _wrapX != null ? util.wrapNum(coords.x.toDouble(), _wrapX) : coords.x.toDouble(),
+      _wrapY != null ? util.wrapNum(coords.y.toDouble(), _wrapY) : coords.y.toDouble(),
     );
     newCoords.z = coords.z.toDouble();
     return newCoords;
