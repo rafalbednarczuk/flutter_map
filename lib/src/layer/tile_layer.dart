@@ -143,7 +143,7 @@ class _TileLayerState extends State<TileLayer> {
 
   void _handleMove() {
     setState(() {
-      _pruneTiles();
+//      _pruneTiles();
       this._resetView();
     });
   }
